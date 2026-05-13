@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<title>SprintRace Timing</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation;-webkit-touch-callout:none}
+html,body{height:100%;background:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#0d1421;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+button{font-family:inherit;-webkit-appearance:none;appearance:none;border:none;background:none;cursor:pointer}
+input,textarea{font-family:inherit;-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text}
+label{cursor:pointer;-webkit-user-select:none;user-select:none}
+:root{--fs:1rem}
+#root{display:flex;flex-direction:column;height:100dvh;max-width:440px;margin:0 auto;background:#f0f2f5;font-size:var(--fs)}
+
+.hdr{background:#fff;border-bottom:2px solid #dde1ea;padding:calc(env(safe-area-inset-top,0px)+10px) 12px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.hdr-title{flex:1;text-align:center;font-size:1.1rem;font-weight:800}
+.hdr-title span{color:#0a9e45}
+.hdr-pill{background:#e4f5ed;color:#077230;border-radius:20px;padding:4px 10px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.hdr-btn{width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;border-radius:8px;color:#3a4560}
+
+.nav{display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-bottom:2px solid #dde1ea;flex-shrink:0}
+.nb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px;min-height:58px;font-size:.68rem;font-weight:600;color:#6b7899;border-bottom:3px solid transparent;position:relative;width:100%}
+.nb.on{color:#0a9e45;border-bottom-color:#0a9e45}
+.nb-ico{font-size:1.4rem;line-height:1}
+.bdg{position:absolute;top:6px;right:calc(50% - 22px);background:#d0250f;color:#fff;border-radius:8px;padding:1px 5px;font-size:.55rem;font-weight:800}
+
+.page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 13px calc(80px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.page.off{display:none}
+
+.card{background:#fff;border:1.5px solid #dde1ea;border-radius:14px;overflow:hidden;flex-shrink:0}
+.card-hd{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b7899;padding:8px 16px 6px;border-bottom:1px solid #dde1ea;background:#f5f7fa}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:700;font-size:1rem;padding:0 18px;cursor:pointer;width:100%}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.3;pointer-events:none}
+.btn.h60{height:60px}.btn.h52{height:52px}.btn.h48{height:48px}.btn.h44{height:44px}.btn.h40{height:40px;font-size:.88rem;border-radius:9px;padding:0 14px;width:auto}
+.btn.h36{height:36px;font-size:.8rem;border-radius:8px;padding:0 12px;width:auto}
+.btn.h32{height:32px;font-size:.75rem;border-radius:8px;padding:0 10px;width:auto}
+.btn.green{background:#0a9e45;color:#fff}.btn.red{background:#d0250f;color:#fff}
+.btn.blue{background:#1251b5;color:#fff}.btn.amber{background:#fff0d6;color:#b86800;border:1.5px solid #dfc68a}
+.btn.ghost{background:#f5f7fa;color:#3a4560;border:1.5px solid #dde1ea}
+
+.num-disp{font-family:'Courier New',monospace;font-size:2rem;font-weight:700;background:#f5f7fa;border:2px solid #dde1ea;border-radius:10px;padding:8px 14px;min-height:52px;display:flex;align-items:center;flex:1}
+.num-disp.ok{background:#e4f5ed;border-color:#0a9e45;color:#077230}
+.num-disp.err{background:#fdecea;border-color:#d0250f;color:#d0250f}
+.nk{height:56px;background:#f5f7fa;border:1.5px solid #dde1ea;border-radius:10px;font-size:1.4rem;font-weight:700;width:100%;color:#0d1421}
+.nk:active{background:#dde1ea}
+
+.cd-wrap{padding:28px 18px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.cd-phase{font-size:3.2rem;font-weight:900;text-align:center}
+.cd-dots{display:flex;gap:14px}
+.cd-dot{width:18px;height:18px;border-radius:50%;background:#dde1ea}
+.cd-dot.on{background:#0a9e45}
+
+.live-time{font-family:'Courier New',monospace;font-size:3rem;font-weight:700;color:#077230;margin:10px 0 20px;letter-spacing:.02em}
+.finish-btn{width:100%;height:80px;background:#d0250f;color:#fff;border-radius:14px;font-size:1.25rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px}
+.finish-btn:active{opacity:.82}
+
+.cls-hd{padding:7px 16px;background:#f3e8ff;border-top:1px solid #d8b4fe;border-bottom:1px solid #d8b4fe;display:flex;align-items:center;gap:8px}
+.cls-lbl{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6b21a8}
+.kl{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-family:monospace;font-size:.85rem;font-weight:700;background:#f3e8ff;color:#6b21a8;border:1.5px solid #d8b4fe;flex-shrink:0}
+.rk-row{display:grid;grid-template-columns:36px 46px 1fr auto;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #dde1ea}
+.rk-row:last-child{border-bottom:none}
+.rk-pos{font-size:.95rem;font-weight:800;text-align:center;color:#6b7899}
+.p1{color:#9a6e00;font-size:1.25rem}.p2{color:#777}.p3{color:#8b5a2b}
+.rk-num{font-family:monospace;font-size:.88rem;font-weight:700;color:#b86800;text-align:center}
+.rk-name{font-size:.88rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.chip{font-family:monospace;font-size:.62rem;padding:2px 7px;border-radius:5px;background:#f5f7fa;color:#6b7899;border:1px solid #dde1ea;font-weight:600}
+.chip.best{background:#e4f5ed;color:#077230;border-color:#0a9e45}
+.chip.del{background:#fdecea;color:#d0250f;border-color:#d0250f;cursor:pointer}
+.rk-time{font-family:monospace;font-size:.88rem;font-weight:700;color:#077230;text-align:right}
+.rk-time.dns{color:#6b7899;font-size:.8rem;font-family:inherit}
+.rk-gap{font-family:monospace;font-size:.62rem;color:#d0250f;margin-top:2px;text-align:right}
+
+.drv-row{display:grid;grid-template-columns:44px 28px 1fr 12px auto;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #dde1ea}
+.drv-dot{width:10px;height:10px;border-radius:50%;background:#dde1ea;flex-shrink:0}
+.drv-dot.done{background:#0a9e45}
+
+.upload-area{display:block;border:2px dashed #dde1ea;border-radius:12px;padding:26px 16px;text-align:center;margin:14px;cursor:pointer}
+.upload-area:active{border-color:#0a9e45;background:#e4f5ed}
+
+.fab{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#1251b5;color:#fff;border-radius:26px;padding:0 24px;height:48px;font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 18px rgba(18,81,181,.35);z-index:400;white-space:nowrap}
+.fab:active{opacity:.82}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:800}
+.sheet{background:#fff;border-radius:20px 20px 0 0;padding:22px 18px calc(32px + env(safe-area-inset-bottom,0px));width:100%;max-width:440px}
+.sheet-title{font-size:1.05rem;font-weight:800;margin-bottom:10px}
+
+.menu-bg{position:fixed;inset:0;z-index:900}
+.menu-box{position:absolute;top:calc(env(safe-area-inset-top,0px)+56px);right:10px;background:#fff;border-radius:14px;border:1.5px solid #dde1ea;min-width:260px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:.95rem;font-weight:600;color:#0d1421;border-bottom:1px solid #dde1ea;width:100%;text-align:left}
+.menu-item:last-child{border-bottom:none}
+.menu-item:active{background:#f5f7fa}
+.menu-item.danger{color:#d0250f}
+.sl-row{padding:10px 16px;border-bottom:1px solid #dde1ea}
+.sl-top{display:flex;justify-content:space-between;font-size:.75rem;font-weight:700;color:#6b7899;margin-bottom:6px}
+.sl-val{color:#077230;font-family:monospace}
+input[type=range]{width:100%;height:6px;border-radius:3px;background:#dde1ea;outline:none;-webkit-appearance:none;appearance:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#0a9e45;cursor:pointer}
+
+.sess-pick{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:440px;padding:22px 18px calc(32px + env(safe-area-inset-bottom,0px))}
+.stand-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:440px;max-height:88dvh;display:flex;flex-direction:column}
+.stand-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #dde1ea;flex-shrink:0}
+.stand-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 8px;border-bottom:1px solid #dde1ea;flex-shrink:0;overflow-x:auto}
+.stand-tab{padding:5px 12px;border-radius:18px;font-size:.72rem;font-weight:700;border:1.5px solid #dde1ea;background:#f5f7fa;color:#6b7899;white-space:nowrap}
+.stand-tab.on{background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe}
+.stand-body{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.copy-sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:440px;height:78dvh;display:flex;flex-direction:column}
+.copy-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid #dde1ea;flex-shrink:0}
+.copy-ta{flex:1;margin:10px 14px 8px;border-radius:10px;border:1.5px solid #dde1ea;background:#f5f7fa;font-family:monospace;font-size:.68rem;color:#3a4560;padding:10px 12px;resize:none;outline:none;-webkit-user-select:text;user-select:text}
+
+.banner{background:#fff0d6;border:1.5px solid #dfc68a;border-radius:14px;padding:14px 16px;font-size:.88rem;color:#b86800}
+.banner b{display:block;font-size:.95rem;color:#0d1421;margin-bottom:4px}
+.sync-bar{background:#e4f5ed;border-radius:8px;padding:6px 12px;font-size:.72rem;font-weight:600;color:#077230;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.sync-bar.err{background:#fdecea;color:#d0250f}
+.empty{text-align:center;padding:40px 18px;color:#6b7899;font-size:.95rem}
+.empty-ico{font-size:2.8rem;margin-bottom:10px}
+.col{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:center}
+.p14{padding:14px}.p1416{padding:14px 16px}
+#toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;z-index:9999;width:calc(100% - 24px);max-width:420px;pointer-events:none}
+.toast{font-size:.88rem;font-weight:700;padding:12px 16px;border-radius:11px;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.13)}
+.toast.ok{border-left:4px solid #0a9e45}.toast.er{border-left:4px solid #d0250f}.toast.in{border-left:4px solid #1251b5}
+</style>
+</head>
+<body>
+<div id="root">
+  <header class="hdr">
+    <div style="width:40px"></div>
+    <div class="hdr-title">Sprint<span>Race</span></div>
+    <div class="hdr-pill" id="pill">0/0 🏁</div>
+    <button class="hdr-btn" id="btn-menu">⋯</button>
+  </header>
+  <nav class="nav">
+    <button class="nb on" data-a="tab" data-tab="timing"><span class="nb-ico">⏱</span>Timing<span class="bdg" id="bdg-t" style="display:none">!</span></button>
+    <button class="nb" data-a="tab" data-tab="results"><span class="nb-ico">🏆</span>Klassement<span class="bdg" id="bdg-r" style="display:none">0</span></button>
+    <button class="nb" data-a="tab" data-tab="drivers"><span class="nb-ico">👥</span>Rijders</button>
+  </nav>
+  <div id="sync-bar-wrap" style="padding:6px 13px 0;flex-shrink:0">
+    <div class="sync-bar" id="sync-bar">🔄 Verbinden met Firebase…</div>
+  </div>
+  <div class="page" id="pg-timing"></div>
+  <div class="page off" id="pg-results"></div>
+  <div class="page off" id="pg-drivers"></div>
+  <button class="fab" id="btn-fab" style="display:none" data-a="standings">🏆 Klassement bekijken</button>
+</div>
+<div id="toasts"></div>
+
+<script type="module">
+import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, update, remove }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ── Firebase config ────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyB97hul45VO_YW76lIa7TGVfyrGLeRHhZI",
+  authDomain: "sprint-timer-98087.firebaseapp.com",
+  databaseURL: "https://sprint-timer-98087-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "sprint-timer-98087",
+  storageBucket: "sprint-timer-98087.firebasestorage.app",
+  messagingSenderId: "305772742537",
+  appId: "1:305772742537:web:d6d84627567afee6e1c358"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function pad2(n){return String(Math.floor(n)).padStart(2,"0");}
+function pad3(n){return String(Math.floor(n)).padStart(3,"0");}
+function fmt(ms){
+  if(ms==null||isNaN(ms))return"--:--.---";
+  return pad2(ms/60000)+":"+pad2((ms%60000)/1000)+"."+pad3(ms%1000);
+}
+function dname(d){return d?[d.first,d.tv,d.last].filter(Boolean).join(" "):"";};
+function uid(){return Math.random().toString(36).slice(2,9);}
+function $(id){return document.getElementById(id);}
+function byNum(n){return ST.drivers.find(d=>d.num===String(n))||null;}
+function classes(){return[...new Set(ST.drivers.map(d=>d.kl).filter(Boolean))].sort();}
+function sres(sid){return (ST.results&&ST.results[sid])||{};}
+function doneInSess(sid){return ST.drivers.filter(d=>(sres(sid)[d.num]||[]).length>0).length;}
+function totalDone(){return ST.drivers.filter(d=>ST.sessions.some(s=>(sres(s.id)[d.num]||[]).length>0)).length;}
+
+function parseCSV(txt){
+  const skip=["naam","name","voornaam","first","nummer","nr"];
+  return txt.split(/\r?\n/).filter(Boolean).reduce((a,line)=>{
+    const c=line.split(/[,;|\t]/).map(x=>x.trim().replace(/^["']|["']$/g,""));
+    if(c.length<2)return a;
+    const num=c[0].replace(/\D/g,"");if(!num)return a;
+    let first="",tv="",last="",kl="";
+    if(c.length>=5){first=c[1];tv=c[2];last=c[3];if(/^[A-Z]$/.test(c[4]))kl=c[4];}
+    else if(c.length===4){first=c[1];if(/^[A-Z]$/.test(c[3])){const m=c[2].toLowerCase();["de","van","der","den","het","te","ten","ter","in"].includes(m)?tv=c[2]:last=c[2];kl=c[3];}else{tv=c[2];last=c[3];}}
+    else if(c.length===3){first=c[1];if(/^[A-Z]$/.test(c[2]))kl=c[2];else last=c[2];}
+    else{const p=c[1].split(" ");first=p[0];last=p.slice(1).join(" ");}
+    for(let i=1;i<c.length;i++)if(!kl&&/^[A-Z]$/.test(c[i])){kl=c[i];break;}
+    if(!first||skip.includes(first.toLowerCase()))return a;
+    a.push({num,first,tv,last,kl});return a;
+  },[]);
+}
+
+// ── State ──────────────────────────────────────────────────────────────
+const ST = {
+  drivers:[], sessions:[], results:{},
+  tab:"timing", sessionId:null,
+  numIn:"", phase:"idle", cdStep:-1, active:null,
+  liveMs:0, tsClass:"Alle", tsSess:"Alle",
+  scale:100, connected:false,
+  cdTimers:[], raf:null, fileRef:null,
+};
+
+// ── Firebase realtime listeners ────────────────────────────────────────
+onValue(ref(db,"drivers"),(snap)=>{
+  ST.drivers = snap.val() ? Object.values(snap.val()) : [];
+  render();
+});
+onValue(ref(db,"sessions"),(snap)=>{
+  ST.sessions = snap.val() ? Object.values(snap.val()) : [];
+  render();
+});
+onValue(ref(db,"results"),(snap)=>{
+  ST.results = snap.val() || {};
+  render();
+});
+onValue(ref(db,".info/connected"),(snap)=>{
+  ST.connected = snap.val()===true;
+  const bar = $("sync-bar");
+  if(ST.connected){
+    bar.textContent="🟢 Live verbonden";
+    bar.className="sync-bar";
+    setTimeout(()=>{ $("sync-bar-wrap").style.display="none"; },2000);
+  }else{
+    $("sync-bar-wrap").style.display="";
+    bar.textContent="🔴 Geen verbinding — wijzigingen worden gesynchroniseerd zodra verbinding hersteld is";
+    bar.className="sync-bar err";
+  }
+});
+
+async function fbSetDrivers(arr){ await set(ref(db,"drivers"), arr.reduce((o,d,i)=>{o[i]=d;return o;},{})); }
+async function fbSetSessions(arr){ await set(ref(db,"sessions"), arr.reduce((o,s,i)=>{o[i]=s;return o;},{})); }
+async function fbSetResults(obj){ await set(ref(db,"results"), obj); }
+
+// ── Audio ──────────────────────────────────────────────────────────────
+let AC=null;
+function getAC(){
+  if(!AC)try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(AC&&AC.state==="suspended")AC.resume();
+  return AC;
+}
+function beep(f,d,v,t){
+  v=1.0;t=t||"sine";
+  const ac=getAC();if(!ac)return;
+  try{
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.connect(g);g.connect(ac.destination);
+    o.type=t;o.frequency.value=f;
+    const now=ac.currentTime;
+    g.gain.setValueAtTime(.001,now);g.gain.linearRampToValueAtTime(v,now+.02);
+    g.gain.setValueAtTime(v,now+d-.04);g.gain.exponentialRampToValueAtTime(.001,now+d);
+    o.start(now);o.stop(now+d+.05);
+  }catch(e){}
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function toast(msg,type){
+  type=type||"ok";
+  const t=document.createElement("div");
+  t.className="toast "+type;t.textContent=msg;
+  $("toasts").appendChild(t);
+  setTimeout(()=>{if(t.parentNode)t.parentNode.removeChild(t);},2800);
+}
+
+// ── Confirm ────────────────────────────────────────────────────────────
+function confirm2(title,body,onOk){
+  const ov=document.createElement("div");ov.className="overlay";ov.style.zIndex="9000";
+  ov.innerHTML=`<div class="sheet">
+    <div class="sheet-title">⚠ ${title}</div>
+    <div style="font-size:.9rem;color:#3a4560;line-height:1.6;margin-bottom:20px;white-space:pre-line">${body}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn h48 ghost" id="cc">Annuleren</button>
+      <button class="btn h48 red"   id="co">Bevestigen</button>
+    </div></div>`;
+  ov.querySelector("#cc").onclick=()=>ov.remove();
+  ov.querySelector("#co").onclick=()=>{onOk();ov.remove();};
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
+// ── Ranking HTML ───────────────────────────────────────────────────────
+function rankingHTML(sid,klass,showDel){
+  const sr=sres(sid);
+  let list=ST.drivers.map(d=>{
+    const runs=(sr[d.num]||[]).map(r=>r.ms);
+    return{...d,runs,best:runs.length?Math.min(...runs):null};
+  });
+  if(klass&&klass!=="Alle")list=list.filter(d=>d.kl===klass);
+  list.sort((a,b)=>{
+    if(a.kl<b.kl)return-1;if(a.kl>b.kl)return 1;
+    if(a.best==null&&b.best==null)return 0;
+    if(a.best==null)return 1;if(b.best==null)return-1;
+    return a.best-b.best;
+  });
+  if(!list.length)return`<div class="empty"><div class="empty-ico">🏁</div>Nog geen tijden</div>`;
+  let html="",lk=null,pos=0,cb=null;
+  list.forEach(d=>{
+    if(d.kl!==lk){lk=d.kl;pos=0;cb=null;
+      html+=`<div class="cls-hd"><span class="kl">${d.kl||"—"}</span><span class="cls-lbl">Klasse ${d.kl||"—"}</span></div>`;}
+    if(d.best!=null){pos++;if(cb==null)cb=d.best;}
+    const med=pos===1?"🥇":pos===2?"🥈":pos===3?"🥉":(d.best!=null?String(pos):"—");
+    const pc=pos===1?"p1":pos===2?"p2":pos===3?"p3":"";
+    const top=d.runs.slice().sort((a,b)=>a-b).slice(0,3);
+    const chips=top.map(ms=>{
+      const ib=ms===d.best;
+      if(showDel)return`<span class="chip${ib?" best":""} del" data-a="delrun" data-sid="${sid}" data-num="${d.num}" data-ms="${ms}">${fmt(ms)} ×</span>`;
+      return`<span class="chip${ib?" best":""}">${fmt(ms)}</span>`;
+    }).join("");
+    const gap=d.best!=null&&cb!=null&&d.best!==cb?`<div class="rk-gap">+${fmt(d.best-cb)}</div>`:"";
+    html+=`<div class="rk-row">
+      <div class="rk-pos ${pc}">${med}</div>
+      <div class="rk-num">#${d.num}</div>
+      <div><div class="rk-name">${dname(d)}</div><div class="rk-chips">${chips}</div></div>
+      <div><div class="rk-time${d.best==null?" dns":""}">${d.best!=null?fmt(d.best):"DNS"}</div>${gap}</div>
+    </div>`;
+  });
+  return html;
+}
+
+// ── CSV ────────────────────────────────────────────────────────────────
+function buildCSV(){
+  const rows=[["Sessie","Pos","Klasse","Startnr","Voornaam","TV","Achternaam","Beste","Run1","Run2","Run3"]];
+  ST.sessions.forEach(s=>{
+    const sr=sres(s.id);
+    const list=ST.drivers.map(d=>{
+      const runs=(sr[d.num]||[]).map(r=>r.ms);
+      return{...d,runs,best:runs.length?Math.min(...runs):null};
+    }).sort((a,b)=>{
+      if(a.kl<b.kl)return-1;if(a.kl>b.kl)return 1;
+      if(a.best==null&&b.best==null)return 0;
+      if(a.best==null)return 1;if(b.best==null)return-1;return a.best-b.best;
+    });
+    let lk=null,pos=0;
+    list.forEach(d=>{
+      if(d.kl!==lk){lk=d.kl;pos=0;}
+      if(d.best!=null)pos++;
+      const top=d.runs.slice().sort((a,b)=>a-b).slice(0,3);
+      rows.push([s.name,d.best!=null?pos:"DNS",d.kl,d.num,d.first,d.tv,d.last,
+        d.best!=null?fmt(d.best):"DNS",...top.map(fmt)]);
+    });
+  });
+  return"\uFEFF"+rows.map(r=>r.join(";")).join("\r\n");
+}
+function doExport(){
+  try{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([buildCSV()],{type:"text/csv"}));
+    a.download="sprint_"+new Date().toISOString().slice(0,10)+".csv";
+    a.style.display="none";document.body.appendChild(a);a.click();
+    setTimeout(()=>document.body.removeChild(a),1000);toast("CSV gedownload ✓");
+  }catch(e){toast("Download mislukt","er");}
+}
+function openCopySheet(){
+  const csv=buildCSV();
+  const ov=document.createElement("div");ov.className="overlay";ov.style.zIndex="850";
+  ov.innerHTML=`<div class="copy-sheet">
+    <div class="copy-hd">
+      <span style="font-size:1rem;font-weight:800">📋 Resultaten CSV</span>
+      <button class="btn h36 ghost" id="copy-close">✕ Sluiten</button>
+    </div>
+    <div style="padding:8px 14px 4px;flex-shrink:0">
+      <button class="btn h48 green" id="copy-action">📋 Kopieer naar klembord</button>
+    </div>
+    <textarea class="copy-ta" id="copy-ta" readonly>${csv}</textarea>
+  </div>`;
+  ov.querySelector("#copy-close").onclick=()=>ov.remove();
+  ov.querySelector("#copy-action").onclick=()=>{
+    const ta=ov.querySelector("#copy-ta");
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(ta.value)
+        .then(()=>{ov.querySelector("#copy-action").textContent="✓ Gekopieerd!";toast("Gekopieerd ✓");})
+        .catch(()=>{ta.select();ta.setSelectionRange(0,99999);document.execCommand("copy");toast("Gekopieerd ✓");});
+    }else{ta.select();ta.setSelectionRange(0,99999);document.execCommand("copy");toast("Gekopieerd ✓");}
+  };
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
+// ── Countdown ──────────────────────────────────────────────────────────
+function startProc(){
+  getAC();
+  const d=byNum(ST.numIn);if(!d||!ST.sessionId)return;
+  ST.cdTimers.forEach(clearTimeout);ST.cdTimers=[];
+  ST.phase="countdown";ST.cdStep=0;renderTiming();
+  beep(440,.18,1);
+  ST.cdTimers.push(setTimeout(()=>beep(440,.18,1),400));
+  ST.cdTimers.push(setTimeout(()=>{ST.cdStep=1;renderTiming();beep(660,.18,1);},2000));
+  ST.cdTimers.push(setTimeout(()=>beep(660,.18,1),2400));
+  ST.cdTimers.push(setTimeout(()=>{
+    ST.cdStep=2;renderTiming();beep(1100,.65,1,"sawtooth");
+    ST.active={num:d.num,first:d.first,tv:d.tv,last:d.last,kl:d.kl,t:Date.now()};
+    ST.cdTimers.push(setTimeout(()=>{ST.phase="running";renderTiming();updateShell();},650));
+  },4000));
+}
+
+async function doFinish(){
+  const a=ST.active;const sid=ST.sessionId;
+  if(!a||!sid)return;
+  const ms=Date.now()-a.t;
+  cancelAnimationFrame(ST.raf);
+  const r=JSON.parse(JSON.stringify(ST.results));
+  if(!r[sid])r[sid]={};
+  if(!r[sid][a.num])r[sid][a.num]=[];
+  r[sid][a.num].push({ms,ts:Date.now()});
+  ST.active=null;ST.phase="idle";ST.numIn="";ST.cdStep=-1;
+  renderTiming();updateShell();
+  await fbSetResults(r);
+  toast("✓  #"+a.num+"  "+dname(a)+"  ·  "+fmt(ms));
+}
+
+// ── Render shell ────────────────────────────────────────────────────────
+function updateShell(){
+  const n=totalDone(),tot=ST.drivers.length;
+  $("pill").textContent=n+"/"+tot+" 🏁";
+  $("bdg-t").style.display=ST.phase==="running"?"":"none";
+  $("bdg-r").textContent=n;
+  $("bdg-r").style.display=n>0?"":"none";
+  const fab=$("btn-fab");
+  fab.style.display=(n>0&&ST.tab==="timing")?"":"none";
+  ["timing","results","drivers"].forEach(id=>{
+    $("pg-"+id).classList.toggle("off",id!==ST.tab);
+    document.querySelector(`[data-tab="${id}"]`).classList.toggle("on",id===ST.tab);
+  });
+}
+
+// ── TIMING ─────────────────────────────────────────────────────────────
+function renderTiming(){
+  const pg=$("pg-timing");
+  const curSess=ST.sessions.find(s=>s.id===ST.sessionId)||null;
+  const d=byNum(ST.numIn);
+  const sessRuns=(curSess&&sres(curSess.id)[ST.numIn])||[];
+  let html="";
+
+  if(!curSess){
+    html=`<div class="card"><div style="padding:28px 18px;text-align:center">
+      <div style="font-size:2.8rem;margin-bottom:12px">🏁</div>
+      <div style="font-size:1rem;font-weight:700;margin-bottom:8px">Kies een sprint sessie</div>
+      <div style="font-size:.88rem;color:#6b7899;margin-bottom:20px">Selecteer of maak een sessie aan voor dit apparaat</div>
+      <button class="btn h52 green" data-a="showsess">🏁 Sessie kiezen / aanmaken</button>
+    </div></div>`;
+    if(ST.drivers.length===0) html=`<div class="banner"><b>Geen rijderslijst geladen</b>Ga naar Rijders → upload een CSV</div>`+html;
+    pg.innerHTML=html;return;
+  }
+
+  // Session bar
+  html+=`<div style="background:#fff;border-radius:12px;border:1.5px solid #0a9e45;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+    <div><div style="font-size:.65rem;font-weight:700;color:#6b7899;text-transform:uppercase;letter-spacing:.08em">Actieve sessie</div>
+    <div style="font-size:1.05rem;font-weight:800;color:#0a9e45">${curSess.name}</div></div>
+    <button class="btn h36 ghost" data-a="showsess">Wissel</button>
+  </div>`;
+
+  if(ST.drivers.length===0) html+=`<div class="banner"><b>Geen rijderslijst</b>Ga naar Rijders → upload een CSV</div>`;
+
+  if(ST.phase==="idle"){
+    const dc=!ST.numIn?"":(d?" ok":" err");
+    const dv=ST.numIn?ST.numIn:`<span style="font-size:1rem;font-weight:500;color:#6b7899">— — —</span>`;
+    const who=ST.numIn&&d?`👤 <strong>${dname(d)}</strong> #${d.num}${d.kl?` <span class="kl">${d.kl}</span>`:""}`:
+               ST.numIn?`<span style="color:#d0250f">⚠ Niet gevonden</span>`:`<span style="color:#6b7899">Voer startnummer in</span>`;
+    html+=`<div class="card"><div class="card-hd">Startnummer invoeren</div>
+      <div class="p1416 row">
+        <div class="num-disp${dc}">${dv}</div>
+        <button class="btn h40 amber${ST.numIn?"":" disabled"}" data-a="npdel"${ST.numIn?"":" disabled"}>⌫ Wis</button>
+      </div>
+      <div style="min-height:36px;padding:4px 16px 6px;font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:8px;color:#3a4560">${who}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px">
+        ${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="nk" data-a="npkey" data-k="${k}">${k}</button>`).join("")}
+        <div></div><button class="nk" data-a="npkey" data-k="0">0</button><div></div>
+      </div>`;
+    if(ST.numIn&&d&&sessRuns.length>0){
+      html+=`<div style="padding:8px 16px 4px;border-top:1px solid #dde1ea">
+        <div style="font-size:.65rem;font-weight:700;color:#6b7899;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Eerdere runs</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:6px">
+          ${sessRuns.map(r=>`<span class="chip">${fmt(r.ms)}</span>`).join("")}
+        </div></div>`;
+    }
+    html+=`<div class="p14"><button class="btn h60 green${d?"":" disabled"}" data-a="startproc"${d?"":" disabled"}>🚦 Start procedure</button></div></div>`;
+  }
+
+  if(ST.phase==="countdown"){
+    const lbls=["🟡 READY","🟠 SET","🟢 GO!"];
+    const clrs=["#b86800","#e05a00","#0a9e45"];
+    const cd=byNum(ST.numIn)||ST.active;
+    html+=`<div class="card"><div class="card-hd">Startprocedure loopt…</div>
+      <div class="cd-wrap">
+        ${cd?`<div style="font-size:.95rem;font-weight:700;color:#3a4560;text-align:center">${dname(cd)}${cd.kl?` <span class="kl">${cd.kl}</span>`:""}</div>`:""}
+        <div class="cd-phase" style="color:${clrs[ST.cdStep]||"#6b7899"}">${lbls[ST.cdStep]||"…"}</div>
+        <div class="cd-dots">${[0,1,2].map(i=>`<div class="cd-dot${ST.cdStep>=i?" on":""}"></div>`).join("")}</div>
+      </div></div>`;
+  }
+
+  if(ST.phase==="running"&&ST.active){
+    const prev=sres(ST.sessionId)[ST.active.num]||[];
+    html+=`<div class="card"><div class="card-hd">Op circuit — ${curSess.name}</div>
+      <div style="padding:20px 18px">
+        <div class="row" style="margin-bottom:8px">
+          <span style="background:#fff;border:1.5px solid #0a9e45;border-radius:7px;padding:3px 10px;font-size:.68rem;font-weight:700;text-transform:uppercase;color:#077230">🟢 RIJDT NU</span>
+          <span style="font-family:monospace;font-weight:700;color:#b86800;font-size:.95rem">#${ST.active.num}</span>
+          ${ST.active.kl?`<span class="kl">${ST.active.kl}</span>`:""}
+        </div>
+        <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">${dname(ST.active)}</div>
+        <div class="live-time" id="live-time">--:--.---</div>
+        <button class="finish-btn" id="finish-btn">🏁 FINISH — Tijd stoppen</button>
+      </div>
+      ${prev.length?`<div style="padding:10px 16px 14px;border-top:1px solid #dde1ea">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;color:#6b7899;letter-spacing:.08em;margin-bottom:6px">Vorige runs</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${prev.map(r=>`<span class="chip">${fmt(r.ms)}</span>`).join("")}</div>
+      </div>`:""}
+    </div>`;
+  }
+
+  pg.innerHTML=html;
+
+  // Attach finish button directly
+  const fb=$("finish-btn");
+  if(fb){
+    fb.addEventListener("touchend",(e)=>{e.preventDefault();doFinish();},{passive:false});
+    fb.addEventListener("click",doFinish);
+  }
+  startTick();
+}
+
+function startTick(){
+  cancelAnimationFrame(ST.raf);
+  if(ST.phase!=="running"||!ST.active)return;
+  (function tick(){
+    const el=$("live-time");
+    if(el)el.textContent=fmt(Date.now()-ST.active.t);
+    ST.raf=requestAnimationFrame(tick);
+  })();
+}
+
+// ── RESULTS ────────────────────────────────────────────────────────────
+function renderResults(){
+  const pg=$("pg-results");
+  const vis=ST.tsSess==="Alle"?ST.sessions:ST.sessions.filter(s=>s.id===ST.tsSess);
+  const hasTimes=ST.sessions.some(s=>Object.keys(sres(s.id)).length>0);
+  let html="";
+  if(ST.sessions.length===0){
+    html=`<div class="card"><div class="empty"><div class="empty-ico">🏆</div>Nog geen sessies aangemaakt</div></div>`;
+    pg.innerHTML=html;return;
+  }
+  if(hasTimes) html+=`<div class="col">
+    <button class="btn h48 blue" data-a="exportcsv">⬇ Download resultaten CSV</button>
+    <button class="btn h48 ghost" data-a="copycsv">📋 Kopieer resultaten (CSV)</button>
+  </div>`;
+  // Session tabs
+  html+=`<div style="display:flex;gap:6px;flex-wrap:wrap">
+    ${["Alle",...ST.sessions.map(s=>s.id)].map(k=>{
+      const lbl=k==="Alle"?"🏆 Alle":(ST.sessions.find(s=>s.id===k)||{name:k}).name;
+      return`<button class="stand-tab${ST.tsSess===k?" on":""}" data-a="tssess" data-k="${k}">${lbl}</button>`;
+    }).join("")}
+  </div>`;
+  // Class tabs
+  const cls=classes();
+  if(cls.length>1){
+    html+=`<div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${["Alle",...cls].map(k=>`<button style="padding:5px 12px;border-radius:18px;font-size:.72rem;font-weight:700;border:1.5px solid ${ST.tsClass===k?"#a3d9b8":"#dde1ea"};background:${ST.tsClass===k?"#e4f5ed":"#f5f7fa"};color:${ST.tsClass===k?"#077230":"#6b7899"};cursor:pointer;font-family:inherit" data-a="tscls" data-k="${k}">${k==="Alle"?"Alle klassen":k}</button>`).join("")}
+    </div>`;
+  }
+  vis.forEach(s=>{
+    html+=`<div class="card">
+      <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
+        <span>${s.name}</span><span style="color:#0a9e45">${doneInSess(s.id)}/${ST.drivers.length} 🏁</span>
+      </div>
+      ${rankingHTML(s.id,ST.tsClass,true)}
+    </div>`;
+  });
+  pg.innerHTML=html;
+}
+
+// ── DRIVERS ────────────────────────────────────────────────────────────
+function renderDrivers(){
+  const pg=$("pg-drivers");
+  const q=(pg.querySelector&&pg.querySelector(".drv-search")?pg.querySelector(".drv-search").value:"").toLowerCase();
+  const filtered=ST.drivers
+    .filter(d=>!q||d.num.includes(q)||dname(d).toLowerCase().includes(q)||(d.kl||"").toLowerCase().includes(q))
+    .sort((a,b)=>a.kl<b.kl?-1:a.kl>b.kl?1:parseInt(a.num)-parseInt(b.num));
+
+  let html=`<div class="card">
+    <div class="upload-area" data-a="uploadcsv">
+      <div style="font-size:2.2rem;margin-bottom:8px">📂</div>
+      <div style="font-size:.88rem;color:#3a4560;line-height:1.7;font-weight:500">
+        <strong style="color:#0a9e45">Tik om CSV te uploaden</strong><br>
+        startnr · voornaam · tv · achternaam · klasse
+      </div>
+    </div>
+    <input type="file" id="file-input" accept=".csv,.txt,.tsv" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0">
+    ${ST.drivers.length>0?`<div class="p14"><button class="btn h40 red" data-a="cleardrv">🗑 Verwijder rijderslijst</button></div>`:""}
+  </div>`;
+
+  // Sessions
+  html+=`<div class="card"><div class="card-hd">Sprint sessies</div><div class="p14 col">
+    ${ST.sessions.map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;border:1.5px solid #dde1ea;background:#f5f7fa">
+      <span style="font-weight:700;font-size:.95rem">${s.name}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:.75rem;color:#6b7899">${doneInSess(s.id)}/${ST.drivers.length} 🏁</span>
+        <button class="btn h32 amber" data-a="delsess" data-id="${s.id}">✕</button>
+      </div>
+    </div>`).join("")}
+    ${ST.sessions.length===0?`<div style="text-align:center;color:#6b7899;padding:10px 0;font-size:.88rem">Nog geen sessies</div>`:""}
+    <div class="row">
+      <input id="new-sess-input" placeholder="Nieuwe sessienaam…" style="flex:1;padding:10px 13px;border-radius:9px;border:1.5px solid #dde1ea;font-size:.95rem;outline:none;font-family:inherit">
+      <button class="btn h44 green" data-a="addsess" style="width:auto;padding:0 16px">+ Voeg toe</button>
+    </div>
+  </div></div>`;
+
+  // Driver list
+  html+=`<div class="card"><div class="card-hd">Rijders (${ST.drivers.length})</div>`;
+  if(ST.drivers.length>0){
+    html+=`<div style="padding:10px 14px;border-bottom:1px solid #dde1ea">
+      <input class="drv-search" placeholder="🔍 Zoek naam, nummer of klasse" value="${q.replace(/"/g,"&quot;")}"
+        style="width:100%;background:#f5f7fa;border:1.5px solid #dde1ea;border-radius:9px;color:#0d1421;font-size:.95rem;padding:10px 13px;outline:none;font-family:inherit">
+    </div>
+    <div style="max-height:50dvh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      ${filtered.map(d=>`<div class="drv-row">
+        <span style="font-family:monospace;font-size:.95rem;font-weight:700;color:#b86800">#${d.num}</span>
+        ${d.kl?`<span class="kl">${d.kl}</span>`:"<span></span>"}
+        <span style="font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${dname(d)}</span>
+        <div class="drv-dot${ST.sessions.some(s=>(sres(s.id)[d.num]||[]).length>0)?" done":""}"></div>
+        <div></div>
+      </div>`).join("")}
+    </div>`;
+  }else{
+    html+=`<div class="empty"><div class="empty-ico">📋</div>Nog geen rijders geladen</div>`;
+  }
+  html+=`</div>`;
+  pg.innerHTML=html;
+
+  // Wire file input
+  const fi=$("file-input");
+  if(fi) fi.addEventListener("change",handleFile);
+  const si=pg.querySelector(".drv-search");
+  if(si) si.addEventListener("input",()=>renderDrivers());
+  const ni=$("new-sess-input");
+  if(ni) ni.addEventListener("keydown",e=>{if(e.key==="Enter")addSession();});
+}
+
+function handleFile(e){
+  const f=e.target&&e.target.files&&e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const p=parseCSV(ev.target.result);
+    if(!p.length){toast("Geen geldige rijders gevonden","er");return;}
+    const kls=[...new Set(p.map(x=>x.kl).filter(Boolean))].sort().join(", ");
+    confirm2("Lijst laden",p.length+" rijders gevonden.\nKlassen: "+(kls||"geen")+"\n\nHuidige lijst vervangen?",async()=>{
+      await fbSetDrivers(p);await fbSetResults({});
+      toast(p.length+" rijders geladen");
+    });
+  };
+  reader.readAsText(f);e.target.value="";
+}
+
+async function addSession(){
+  const ni=$("new-sess-input");
+  const name=ni?ni.value.trim():"";if(!name)return;
+  const s=[...ST.sessions,{id:uid(),name}];
+  await fbSetSessions(s);if(ni)ni.value="";
+  toast(`Sessie "${name}" aangemaakt`);
+}
+
+// ── Session picker ─────────────────────────────────────────────────────
+function openSessPicker(){
+  const ov=document.createElement("div");ov.className="overlay";ov.style.zIndex="850";
+  const buildContent=()=>{
+    let inner=`<div class="sheet-title">🏁 Kies je sessie</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:40dvh;overflow-y:auto">`;
+    ST.sessions.forEach(s=>{
+      const isOn=ST.sessionId===s.id;
+      inner+=`<button data-pick="${s.id}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:12px;border:2px solid ${isOn?"#0a9e45":"#dde1ea"};background:${isOn?"#e4f5ed":"#f5f7fa"};cursor:pointer;font-family:inherit;width:100%">
+        <span style="font-weight:700;font-size:1rem">${s.name}</span>
+        <span style="font-size:.75rem;color:#6b7899">${doneInSess(s.id)}/${ST.drivers.length} 🏁</span>
+      </button>`;
+    });
+    if(!ST.sessions.length) inner+=`<div style="text-align:center;color:#6b7899;padding:20px 0;font-size:.88rem">Nog geen sessies — maak er een aan hieronder</div>`;
+    inner+=`</div>
+    <div class="row">
+      <input id="sp-new" placeholder="Nieuwe sessienaam…" style="flex:1;padding:10px 13px;border-radius:9px;border:1.5px solid #dde1ea;font-size:.95rem;outline:none;font-family:inherit">
+      <button class="btn h44 green" id="sp-add" style="width:auto;padding:0 14px">+ Voeg toe</button>
+    </div>`;
+    return inner;
+  };
+  const sh=document.createElement("div");sh.className="sess-pick";
+  sh.innerHTML=buildContent();
+  ov.appendChild(sh);
+  const wire=()=>{
+    sh.querySelectorAll("[data-pick]").forEach(btn=>{
+      btn.addEventListener("click",()=>{ST.sessionId=btn.dataset.pick;ov.remove();renderTiming();updateShell();});
+    });
+    const spAdd=sh.querySelector("#sp-add");
+    const spNew=sh.querySelector("#sp-new");
+    if(spAdd) spAdd.addEventListener("click",async()=>{
+      const name=spNew?spNew.value.trim():"";if(!name)return;
+      const s=[...ST.sessions,{id:uid(),name}];
+      await fbSetSessions(s);
+      if(spNew)spNew.value="";
+    });
+    if(spNew) spNew.addEventListener("keydown",async e=>{
+      if(e.key==="Enter"){
+        const name=spNew.value.trim();if(!name)return;
+        const s=[...ST.sessions,{id:uid(),name}];
+        await fbSetSessions(s);spNew.value="";
+      }
+    });
+  };
+  wire();
+  // Re-render session list when Firebase updates
+  const origSessions=JSON.stringify(ST.sessions);
+  const poller=setInterval(()=>{
+    if(JSON.stringify(ST.sessions)!==origSessions){
+      sh.innerHTML=buildContent();wire();
+    }
+    if(!document.body.contains(ov))clearInterval(poller);
+  },500);
+  ov.addEventListener("click",e=>{if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+}
+
+// ── Menu ────────────────────────────────────────────────────────────────
+function openMenu(){
+  if(document.querySelector(".menu-bg"))return;
+  const ov=document.createElement("div");ov.className="menu-bg";
+  ov.innerHTML=`<div class="menu-box">
+    <div class="sl-row">
+      <div class="sl-top"><span>🔤 Tekstgrootte</span><span class="sl-val" id="sc-v">${ST.scale}%</span></div>
+      <input type="range" id="sc-sl" min="70" max="130" value="${ST.scale}">
+    </div>
+    <button class="menu-item" data-a="exportcsv">⬇ Download resultaten CSV</button>
+    <button class="menu-item" data-a="copycsv">📋 Kopieer resultaten (CSV)</button>
+    <button class="menu-item danger" data-a="resetall">🗑 Alles wissen</button>
+    <button class="menu-item" data-a="exitapp">✕ App afsluiten</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const sl=document.getElementById("sc-sl");
+  if(sl) sl.addEventListener("input",()=>{
+    ST.scale=+sl.value;
+    document.getElementById("sc-v").textContent=ST.scale+"%";
+    document.documentElement.style.fontSize=(16*ST.scale/100)+"px";
+  });
+  ov.addEventListener("click",e=>{if(e.target===ov)closeMenu();});
+}
+function closeMenu(){const m=document.querySelector(".menu-bg");if(m)m.remove();}
+
+// ── Main render ─────────────────────────────────────────────────────────
+function render(){
+  updateShell();
+  if(ST.tab==="timing") renderTiming();
+  if(ST.tab==="results") renderResults();
+  if(ST.tab==="drivers") renderDrivers();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SINGLE DELEGATED EVENT HANDLER — works on iOS file:// and hosted URLs
+// ══════════════════════════════════════════════════════════════════════════
+let _tx=0,_ty=0,_lastA="",_lastT=0;
+document.addEventListener("touchstart",e=>{
+  _tx=e.touches[0].clientX;_ty=e.touches[0].clientY;
+  getAC();
+},{passive:true});
+
+function findAction(el){
+  let n=el;
+  while(n&&n!==document.body){
+    const a=n.getAttribute("data-a");if(a)return{a,el:n};
+    n=n.parentElement;
+  }
+  return null;
+}
+
+function dispatch(e){
+  const isTouch=e.type==="touchend";
+  if(isTouch){
+    const t=e.changedTouches[0];
+    if(Math.abs(t.clientX-_tx)>10||Math.abs(t.clientY-_ty)>10)return;
+  }
+  const found=findAction(e.target);if(!found)return;
+  const{a,el}=found;
+  const now=Date.now();
+  if(a===_lastA&&now-_lastT<400)return;
+  _lastA=a;_lastT=now;
+  if(isTouch)e.preventDefault();
+  handle(a,el);
+}
+
+async function handle(a,el){
+  if(a==="tab"){
+    ST.tab=el.dataset.tab;
+    render();return;
+  }
+  if(a==="menu"){openMenu();return;}
+  if(a==="standings"){ST.tab="results";render();return;}
+  if(a==="npkey"){if(ST.numIn.length<4){ST.numIn+=el.dataset.k;renderTiming();}return;}
+  if(a==="npdel"){ST.numIn=ST.numIn.slice(0,-1);renderTiming();return;}
+  if(a==="startproc"){startProc();return;}
+  if(a==="showsess"){openSessPicker();return;}
+  if(a==="exportcsv"){closeMenu();doExport();return;}
+  if(a==="copycsv"){closeMenu();openCopySheet();return;}
+  if(a==="resetall"){
+    closeMenu();
+    confirm2("Alles wissen","Alle rijders, sessies en tijden verwijderen?",async()=>{
+      await fbSetDrivers([]);await fbSetSessions([]);await fbSetResults({});
+      ST.sessionId=null;toast("Alles gewist","in");
+    });return;
+  }
+  if(a==="exitapp"){
+    closeMenu();
+    confirm2("App afsluiten","Alle data blijft opgeslagen in Firebase.\nWeet je het zeker?",()=>{
+      document.body.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:-apple-system,sans-serif;color:#6b7899;text-align:center;padding:24px;flex-direction:column;gap:16px">
+        <div style="font-size:3rem">🏁</div>
+        <div style="font-weight:800;font-size:1.1rem;color:#0d1421">App afgesloten</div>
+        <div style="font-size:.9rem">Data opgeslagen in Firebase.<br>Herlaad de pagina om opnieuw te starten.</div>
+      </div>`;
+    });return;
+  }
+  if(a==="uploadcsv"){
+    const fi=$("file-input");if(fi)fi.click();return;
+  }
+  if(a==="cleardrv"){
+    confirm2("Rijders wissen","Alle rijders en tijden verwijderen?",async()=>{
+      await fbSetDrivers([]);await fbSetResults({});toast("Rijders gewist","in");
+    });return;
+  }
+  if(a==="addsess"){addSession();return;}
+  if(a==="delsess"){
+    const id=el.dataset.id;
+    confirm2("Sessie verwijderen","Sessie en alle tijden verwijderen?",async()=>{
+      const s=ST.sessions.filter(x=>x.id!==id);
+      const r=JSON.parse(JSON.stringify(ST.results));delete r[id];
+      await fbSetSessions(s);await fbSetResults(r);
+      if(ST.sessionId===id)ST.sessionId=null;
+      toast("Sessie verwijderd","in");
+    });return;
+  }
+  if(a==="tssess"){ST.tsSess=el.dataset.k;renderResults();return;}
+  if(a==="tscls"){ST.tsClass=el.dataset.k;renderResults();return;}
+  if(a==="delrun"){
+    const{sid,num,ms}=el.dataset;
+    confirm2("Run verwijderen","Run van #"+num+" ("+fmt(+ms)+") verwijderen?",async()=>{
+      const r=JSON.parse(JSON.stringify(ST.results));
+      const arr=(r[sid]&&r[sid][num])||[];
+      const idx=arr.findIndex(x=>x.ms===+ms);
+      if(idx>=0)arr.splice(idx,1);
+      if(arr.length===0&&r[sid])delete r[sid][num];
+      await fbSetResults(r);toast("Run verwijderd","in");
+    });return;
+  }
+}
+
+document.addEventListener("touchend",dispatch,{passive:false});
+document.addEventListener("click",dispatch);
+
+// Boot
+render();
+</script>
+</body>
+</html>
